@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8" />
+        <title>Sifting - Projects</title>
+        <link rel="stylesheet" href="/theme/css/main.css" />
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="/">Sifting </a></h1>
+                <nav><ul>
+                    <li><a href="/category/articles.html">Articles</a></li>
+                    <li class="active"><a href="/category/projects.html">Projects</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+
+            <aside id="featured" class="body">
+                <article>
+                    <h1 class="entry-title"><a href="/leet-and-orange.html">Leet and Orange</a></h1>
+<footer class="post-info">
+        <abbr class="published" title="3000-12-01T00:00:00+01:00">
+                Published: Mon 01 December 3000
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="/author/sifting.html">Sifting</a>
+        </address>
+<p>In <a href="/category/projects.html">Projects</a>.</p>
+
+</footer><!-- /.post-info --><p>I really like Anarchy Online. There's a bit of an archival subculture in the 
+community - it's an old game now, with <em>a lot</em> of history behind it - complete
+with a <a href="https://gitlab.com/AOvault/AOvault">community archive</a> that keeps track of everything from CD images to 
+screenshots. As I browsed through the files, it had me thinking about what 
+would happen when the game went offline - all the unique areas and characters 
+and music and everything would be in effect lost. So I opened my hex editor and fired up 
+<a href="https://www.hex-rays.com/">IDA</a>. I'm happy to say that since then almost all of the 
+assets and their file formats have been reverse engineered and documented, the 
+results of which can be seen below. I decided to call this project Leet, 
+after a fan favourite character in the game.</p>
+<p><a href="/data/leet.mp4">An equiped character, showing off some new armour</a></p>
+<p><a href="/data/leet2.mp4">The new Aztur model for the RK2019 server</a></p>
+<p>After figuring out most of the assets, it occured to me how cool it would be to
+put together an interactive demo. If anything, it would give me a chance
+to put MiST, a library that I wrote in C, containing wealth of neat things, 
+including a thread module that implements something akin to C# style tasks - 
+to good use! You can see the results of that effort here:</p>
+<p><a href="/data/orange.mp4">Running around</a></p>
+<p><a href="/data/orange2.mp4">Showing off some camera controls</a></p>
+<p>It was quite an effort putting it all together. In order to just playback the 
+animations alone I had to write a whole new animation system from the ground up, but
+the results are quite good I feel, given it supports a modern feature set. Indeed, 
+the whole project runs on wholly original technology, from graphics down to 
+the configuration parser. I initially toyed with the idea of reading all of 
+the assets from the game's resource database, but opted against it, reasoning 
+that it would be better to preprocess all of the assets into original new formats, 
+both out of concern for Anarchy Online, and to make implementing the 
+new systems easier. I ended up calling this new effort Orange to set it apart
+from Leet proper.</p>
+<p>It was all in all very worth while, being full of new experiences and interesting
+stories to tell.</p>                </article>
+            </aside><!-- /#featured -->
+                <section id="content" class="body">
+                    <h1>Other articles</h1>
+                    <hr />
+                    <ol id="posts-list" class="hfeed">
+
+            <li><article class="hentry">
+                <header>
+                    <h1><a href="/transhuman.html" rel="bookmark"
+                           title="Permalink to Transhuman">Transhuman</a></h1>
+                </header>
+
+                <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="3000-11-01T00:00:00+01:00">
+                Published: Sat 01 November 3000
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="/author/sifting.html">Sifting</a>
+        </address>
+<p>In <a href="/category/projects.html">Projects</a>.</p>
+
+</footer><!-- /.post-info -->                <p>I love a <a href="https://en.wikipedia.org/wiki/MUD">MUD</a>, in particular <a href="https://www.play.net/dr/">Dragon Realms</a>. 
+The depth and potential for immersive  experiences in these games cannot be overstated.
+So it was, more or less on a whim, that I ended up playing around with the idea of 
+writing my own. While there is a glut of high …</p>
+                <a class="readmore" href="/transhuman.html">read more</a>
+                </div><!-- /.entry-content -->
+            </article></li>
+
+            <li><article class="hentry">
+                <header>
+                    <h1><a href="/traum.html" rel="bookmark"
+                           title="Permalink to Traum">Traum</a></h1>
+                </header>
+
+                <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="3000-07-01T00:00:00+01:00">
+                Published: Tue 01 July 3000
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="/author/sifting.html">Sifting</a>
+        </address>
+<p>In <a href="/category/projects.html">Projects</a>.</p>
+
+</footer><!-- /.post-info -->                <p>Back in late 2019 I was talking with a friend and we got the idea to put 
+together a little demo for the <a href="https://en.wikipedia.org/wiki/Dreamcast">Sega Dreamcast</a>. A month later, Traum came into
+the world. See for yourself below!</p>
+<p><a href="/data/timelapse.mp4">Time lapse</a></p>
+<p><a href="/data/explore.mp4">Exploration</a></p>
+<p><a href="/data/sunrise.mp4">Sunrise</a></p>
+<p>I wrote Traum from the ground up to be …</p>
+                <a class="readmore" href="/traum.html">read more</a>
+                </div><!-- /.entry-content -->
+            </article></li>
+
+            <li><article class="hentry">
+                <header>
+                    <h1><a href="/double-action.html" rel="bookmark"
+                           title="Permalink to Double Action">Double Action</a></h1>
+                </header>
+
+                <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="3000-03-01T00:00:00+01:00">
+                Published: Sat 01 March 3000
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="/author/sifting.html">Sifting</a>
+        </address>
+<p>In <a href="/category/projects.html">Projects</a>.</p>
+
+</footer><!-- /.post-info -->                <p>Around 2013 a friend shared an article to our group. It about this new Source
+game called Double Action, and billed it as the successor to The Specialists,
+an amazing Half-Life modification. I was instantly sold, and before I knew it
+I was writing player physics and game logic!</p>
+<p>The …</p>
+                <a class="readmore" href="/double-action.html">read more</a>
+                </div><!-- /.entry-content -->
+            </article></li>
+
+            <li><article class="hentry">
+                <header>
+                    <h1><a href="/star-cannon-invasion-formation.html" rel="bookmark"
+                           title="Permalink to Star Cannon: Invasion Formation">Star Cannon: Invasion Formation</a></h1>
+                </header>
+
+                <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="3000-01-01T00:00:00+01:00">
+                Published: Wed 01 January 3000
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="/author/sifting.html">Sifting</a>
+        </address>
+<p>In <a href="/category/projects.html">Projects</a>.</p>
+
+</footer><!-- /.post-info -->                <p>In March of 2009 a friend sent a message to me, explaining that they were working
+on a game for a competition, that they needed an audio and file system, and
+that the deadline was in three days. Of course, I agreed to help!
+Less than twenty four hours later …</p>
+                <a class="readmore" href="/star-cannon-invasion-formation.html">read more</a>
+                </div><!-- /.entry-content -->
+            </article></li>
+                </ol><!-- /#posts-list -->
+                </section><!-- /#content -->
+        <section id="extras" class="body">
+                <div class="social">
+                        <h2>social</h2>
+                        <ul>
+
+                            <li><a href="https://github.com/sifting">Github</a></li>
+                        </ul>
+                </div><!-- /.social -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body">
+                <address id="about" class="vcard body">
+                Proudly powered by <a href="http://getpelican.com/">Pelican</a>, which takes great advantage of <a href="http://python.org">Python</a>.
+                </address><!-- /#about -->
+
+                <p>The theme is by <a href="http://coding.smashingmagazine.com/2009/08/04/designing-a-html-5-layout-from-scratch/">Smashing Magazine</a>, thanks!</p>
+        </footer><!-- /#contentinfo -->
+
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8" />
+        <title>Sifting - Articles</title>
+        <link rel="stylesheet" href="/theme/css/main.css" />
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="/">Sifting </a></h1>
+                <nav><ul>
+                    <li class="active"><a href="/category/articles.html">Articles</a></li>
+                    <li><a href="/category/projects.html">Projects</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+
+            <aside id="featured" class="body">
+                <article>
+                    <h1 class="entry-title"><a href="/triangle-soup-or-how-do-i-eat-it.html">Triangle Soup, or, how do I eat it?</a></h1>
+<footer class="post-info">
+        <abbr class="published" title="3000-06-03T00:00:00+01:00">
+                Published: Tue 03 June 3000
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="/author/sifting.html">Sifting</a>
+        </address>
+<p>In <a href="/category/articles.html">Articles</a>.</p>
+
+</footer><!-- /.post-info --><p>I have a fascination with old 3D stuff. Games, applications, you name it, it's all exciting! I had a thing for level editors in particular. I remember looking over the <a href="https://github.com/id-Software/Quake-Tools">source code</a> for the old qtools release and marveling - while taking notes - on how they made it  all work, when I read a comment, presumably from Abrash or Carmack:</p>
+<p><a href="https://github.com/id-Software/Quake-Tools/blob/c0d1b91c74eb654365ac7755bc837e497caaca73/qutils/QBSP/BRUSH.C#L433"><code>This is done by brute force, and could easily get a lot faster if anyone cares.</code></a></p>
+<p>And it had me wondering...</p>
+<p>In the years since, I have picked up a few new tricks for solving those same old problems, of which I am happy to present two of them here, but let's begin  with the problem itself: the triangle soup.  </p>
+<h3>What <em>is</em> Triangle Soup?</h3>
+<p>These days it's not uncommon for entire levels to be made inside 3D packages; with Traum everything from geometry to entities are made and arranged inside Blender. A piece-wise approach is also popular where geometric set-pieces are crafted in the 3D package of choice, then brought into a designer tool, as  is often seen in Unity and Unreal. Which ever way is used though, the data has to be processed into a form that the underlying engine may use. In terms of  geometric data, it is often given as an unorganised set of polygons -  often triangles - hence the name Triangle Soup comes.</p>
+<p>Depending on your application, you may only be interested in the faces, in  which case you will need only minimal processing, whereas things like physics  engines require a lot more work to process the data into something usable. What ever your application may be, the first data structure presented here will help aid in the digestion of the triangle soup!</p>
+<h3>The Half-Edge Structure</h3>
+<p>This data structure is also known as the <a href="https://en.wikipedia.org/wiki/Doubly_connected_edge_list">Doubly Connected Edge List</a>, a name which a part from being a mouthful, also hints at its underlying primitive structure.  In short, a given polygon is decomposed into a doubly linked list, where each edge is a node in the list. Edges are linked in respect to their winding order. While not required, I find making the list circular simplifies a lot of code in practice.</p>
+<p>The 'half' part of the 'Half-Edge' name stems from the fact each edge in this  structure is bound only to a single face, rather than being shared between two as in the general sense of an edge. Instead, each half-edge contains a link to  its <code>twin</code> in the other face that shares the logical edge, which together the  twins represent. For clarity, see the picture below.</p>
+<div class="highlight"><pre><span></span>            <span class="n">AB</span>
+    <span class="n">A</span><span class="o">-----------------</span><span class="n">B</span>
+    <span class="o">|</span>                <span class="o">/|</span>
+    <span class="o">|</span>               <span class="o">/</span> <span class="o">|</span>
+    <span class="o">|</span>     <span class="n">F0</span>       <span class="o">/</span>  <span class="o">|</span>
+    <span class="o">|</span>             <span class="o">/</span>   <span class="o">|</span>
+    <span class="o">|</span>            <span class="o">/</span>    <span class="o">|</span>
+    <span class="o">|</span>           <span class="o">/</span>     <span class="o">|</span>
+    <span class="o">|</span>          <span class="o">/</span>      <span class="o">|</span>
+ <span class="n">CA</span> <span class="o">|</span>      <span class="n">BC</span> <span class="o">/</span>       <span class="o">|</span> <span class="n">BD</span>
+    <span class="o">|</span>        <span class="o">/</span>        <span class="o">|</span>
+    <span class="o">|</span>       <span class="o">/</span> <span class="n">CB</span>      <span class="o">|</span>
+    <span class="o">|</span>      <span class="o">/</span>          <span class="o">|</span>
+    <span class="o">|</span>     <span class="o">/</span>           <span class="o">|</span>
+    <span class="o">|</span>    <span class="o">/</span>            <span class="o">|</span>
+    <span class="o">|</span>   <span class="o">/</span>             <span class="o">|</span>
+    <span class="o">|</span>  <span class="o">/</span>       <span class="n">F1</span>     <span class="o">|</span>
+    <span class="o">|</span> <span class="o">/</span>               <span class="o">|</span>
+    <span class="o">|/</span>                <span class="o">|</span>
+    <span class="n">C</span><span class="o">-----------------</span><span class="n">D</span>
+            <span class="n">DC</span>
+</pre></div>
+
+
+<p><sup>Edges AB, BC and CA form face F0, and edges BD, DC and CB form face F1. Edges BC and CB are twins. Note that the <code>twin</code>s may have different winding orders.</sup></p>
+<p>In addition to the edge links, the remaining fields of a half-edge are a vertex and a reference to the face to which it belongs. Additional fields may be given as well as needed. A basic example is given below.</p>
+<div class="highlight"><pre><span></span><span class="n">struct</span> <span class="n">HalfEdge</span><span class="p">:</span>
+    <span class="n">HalfEdge</span> <span class="n">prev</span>
+    <span class="n">HalfEdge</span> <span class="nb">next</span>
+    <span class="n">HalfEdge</span> <span class="n">twin</span>
+    <span class="n">Vector3</span> <span class="n">point</span>
+    <span class="n">Face</span> <span class="n">owner</span>
+<span class="n">end</span>
+</pre></div>
+
+
+<p>Through the <code>twin</code> links may adjacent faces be travelled, thus forming a full fledged graph once the triangle soup has been rendered into this form! This is where the true power of this structure becomes apparent. For example, merging two faces now boils down to a matter of joining linked lists together, like so:</p>
+<div class="highlight"><pre><span></span><span class="n">edge</span><span class="o">.</span><span class="n">prev</span><span class="o">.</span><span class="n">next</span> <span class="o">=</span> <span class="n">twin</span><span class="o">.</span><span class="n">next</span>
+<span class="n">twin</span><span class="o">.</span><span class="n">next</span><span class="o">.</span><span class="n">prev</span> <span class="o">=</span> <span class="n">edge</span><span class="o">.</span><span class="n">prev</span>
+<span class="n">edge</span><span class="o">.</span><span class="n">next</span><span class="o">.</span><span class="n">prev</span> <span class="o">=</span> <span class="n">twin</span><span class="o">.</span><span class="n">prev</span>
+<span class="n">twin</span><span class="o">.</span><span class="n">prev</span><span class="o">.</span><span class="n">next</span> <span class="o">=</span> <span class="n">edge</span><span class="o">.</span><span class="n">next</span>
+</pre></div>
+
+
+<p>In practice there will be some extra busy work with fixing up face references, but as far as the geometric operation itself goes, it's really as simple as  that! </p>
+<p>The appeal in this structure is its generality, and the raw power that it gives us to manipulate geometric data in a sensible, structured way.  In the Traum tools for example, triangle soup is digested into a half-edge  graph, then run through different modules to generate datasets for the graphics  and collision systems, and will be soon used to derive pathfinding data as well.</p>
+<p>All of this generality comes at a cost though, and it's ultimately the same as its underlying structure: High memory overhead, and poor data locality. Each Half-Edge is 44 bytes, assuming 64 bit pointers, making a single triangle consume 132 bytes, given the example structure.</p>
+<p>For situations where this is too great a cost, I would like to present the next structure as a possible alternative.</p>
+<h3>The Tri-Tree</h3>
+<p>The Tri-Tree is, as far as I know, a little known data structure that is analogous in every way to its more famous sibling, the <a href="https://en.wikipedia.org/wiki/Quadtree">Quad-Tree</a>. The difference between them being that the Tri-Tree only has three neighbours instead of four. I first encountered it while reading about Henri Hakl's <a href="https://www.researchgate.net/publication/220102990_Diamond_terrain_algorithm_continuous_levels_of_detail_for_height_fields">Diamond Terrain Algorithm</a>, and have never again seen it in any other literature or application, but it is also a fine digestive aid. See the picture below to get an idea of how it's shaped.</p>
+<div class="highlight"><pre><span></span> <span class="n">________________________</span>
+ \          <span class="o">/</span>\          <span class="o">/</span>
+  \  <span class="n">left</span>  <span class="o">/</span> <span class="n">b</span>\ <span class="n">right</span>  <span class="o">/</span>
+   \      <span class="o">/</span><span class="n">____</span>\      <span class="o">/</span>
+    \    <span class="o">/</span>\    <span class="o">/</span>\    <span class="o">/</span>
+     \  <span class="o">/</span><span class="n">d</span> \ <span class="n">a</span><span class="o">/</span> <span class="n">c</span>\  <span class="o">/</span>
+      \<span class="o">/</span><span class="n">____</span>\<span class="o">/</span><span class="n">____</span>\<span class="o">/</span>
+       \  <span class="n">bottom</span>  <span class="o">/</span>
+        \        <span class="o">/</span>
+         \      <span class="o">/</span>
+          \    <span class="o">/</span>
+           \  <span class="o">/</span>
+            \<span class="o">/</span>
+</pre></div>
+
+
+<p><sup>The Tri-Tree has a reference to its parent tri-tree, three references to its  neighbours, one for each edge, as well as four references to inner tri-tree children.</sup></p>
+<p>An example structure may look like this, and again, additional fields for attribute data may be added as needed:</p>
+<div class="highlight"><pre><span></span><span class="n">struct</span> <span class="n">TriTree</span><span class="p">:</span>
+    <span class="n">TriTree</span> <span class="n">parent</span>
+    <span class="n">TriTree</span> <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">bottom</span>     <span class="c1">#The three neighbours</span>
+    <span class="n">TriTree</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span>              <span class="c1">#The four children</span>
+    <span class="n">Vector3</span> <span class="n">p0</span><span class="p">,</span> <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span>              <span class="c1">#The 3 points of the triangle</span>
+<span class="n">end</span>
+</pre></div>
+
+
+<p>This structure has a strong hierarchal flavour with this interesting property: any triangle may be split into four sub-triangles, or vice versa, any four children may be reduced into a single triangle. Because of this, the Tri-Tree  structure lends it self well to deriving graphical data. For example, by  exploiting its hierarchal property, generating LODs is made a much more  enjoyable task. I also found that it makes for a suitable choice for creating  adjacency graphs, which if that's all you need, then the structure could be modified such that there are only the three neighbour links.</p>
+<p>Memory usage may be reduced by storing references as 8- 16- or 32- bit values, that index into a preallocated list of Tri-Tree structures, which is more easily  done with this structure than the Half-Edge given above. Similarly the vertices  may be given as index values as well for further savings. Indeed, of the two  this structure is the most flexible with memory usage. A single triangle  comes in at 100 bytes in the example form, and may easily be reduced to less than a single half-edge in size!</p>
+<p>Outside of graphical applications things look rough for the Tri-Tree. While it has an interesting hierarchal property, and constant time access to adjacency information, it does not provide any explicit access to edge data, in addition to being locked into representing all geometry as triangles. However, if these limitations are acceptable, then it may work well in digesting triangle soup into pathfinding data, given its easy access to adjacency information.</p>
+<h3>The Final Word</h3>
+<p>Some readers may be wondering if there are any other alternatives out there, and the answer is Yes: the <a href="https://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/model/winged-e.html">Winged Edge</a> structure is said to offer a lot of constant time look ups if  you're really hurting for speed, but it's a state heavy solution, requiring three  different structures, and has the highest memory overhead of them all. Its features are similar to the Half-Edge structure, which it predates by a few years!</p>
+<p>And with that we come to the end of the article. I hope these little musings  help someone find their way in this crazy world.</p>
+<p>Thank you for reading! </p>                </article>
+            </aside><!-- /#featured -->
+        <section id="extras" class="body">
+                <div class="social">
+                        <h2>social</h2>
+                        <ul>
+
+                            <li><a href="https://github.com/sifting">Github</a></li>
+                        </ul>
+                </div><!-- /.social -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body">
+                <address id="about" class="vcard body">
+                Proudly powered by <a href="http://getpelican.com/">Pelican</a>, which takes great advantage of <a href="http://python.org">Python</a>.
+                </address><!-- /#about -->
+
+                <p>The theme is by <a href="http://coding.smashingmagazine.com/2009/08/04/designing-a-html-5-layout-from-scratch/">Smashing Magazine</a>, thanks!</p>
+        </footer><!-- /#contentinfo -->
+
+</body>
+</html>
