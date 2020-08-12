@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
         <meta charset="utf-8" />
-        <title>Sifting - Sifting</title>
+        <title>Hooking Up Online: a symposium on sockets</title>
         <link rel="stylesheet" href="/theme/css/main.css" />
 </head>
 
@@ -10,14 +10,19 @@
         <header id="banner" class="body">
                 <h1><a href="/">Sifting </a></h1>
                 <nav><ul>
-                    <li><a href="/category/articles.html">Articles</a></li>
+                    <li class="active"><a href="/category/articles.html">Articles</a></li>
                     <li><a href="/category/projects.html">Projects</a></li>
                 </ul></nav>
         </header><!-- /#banner -->
+<section id="content" class="body">
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a href="/hooking-up-online-a-symposium-on-sockets.html" rel="bookmark"
+           title="Permalink to Hooking Up Online: a symposium on sockets">Hooking Up Online: a symposium on sockets</a></h1>
+    </header>
 
-            <aside id="featured" class="body">
-                <article>
-                    <h1 class="entry-title"><a href="/hooking-up-online-a-symposium-on-sockets.html">Hooking Up Online: a symposium on sockets</a></h1>
+    <div class="entry-content">
 <footer class="post-info">
         <abbr class="published" title="2020-08-12T00:00:00+02:00">
                 Published: Wed 12 August 2020
@@ -28,7 +33,7 @@
         </address>
 <p>In <a href="/category/articles.html">Articles</a>.</p>
 
-</footer><!-- /.post-info --><p>One of the coolest things that I remember doing is creating a little chat application and using it to chat with my friends. It made me feel powerful, even though the actual code was simple. Of course, I knew what next had to be done...</p>
+</footer><!-- /.post-info -->      <p>One of the coolest things that I remember doing is creating a little chat application and using it to chat with my friends. It made me feel powerful, even though the actual code was simple. Of course, I knew what next had to be done...</p>
 <p>In this article I will share some insight that I've gained in my time writing networking code for <em>Real-Time Applications.</em> So let's start with that age old question.</p>
 <h3>TCP Or UDP?</h3>
 <p>Traditional wisdom says to use UDP for speed, and TCP for reliability, but fails to really explain the reasoning behind it. In a real time application there may be reasons to use both - for example, in a video game you may want to use TCP for text chat, and UDP for communicating game state. Why is that, though?</p>
@@ -48,165 +53,11 @@
 <p>At this point, if you know that your largest possible packet will be less than the MTU size, then no other framing is required to get a usable protocol up and running. On the other hand, if it's conceivable that your packet size will exceed the the MTU, then it's time to consider a fragmentation approach. Fragmentation is the act of splitting a large packet up into a series of smaller ones that fit within the MTU size, then sending them out individually, where they are then reassembled on the remote side. To facilitate this, I find the best to write another monotonic id to the packet, which keeps track of each fragment within a packet. The concept is straight forward enough, but there is room for finessing - for example, how should out of order fragments be handled?</p>
 <h3>The Final Word</h3>
 <p>So from here you should have a good idea of why reliable protocols a la TCP are a poor choice for streaming in real time, and more over, how to get started with UDP to do something better, but there are numerous avenues to explore from here, but are beyond the scope of this introduction, e.g.: how to handle data loss in a graceful manner.</p>
-<p>Some readers may be wondering if there are any other alternatives as well, and the answer is yes! There is <a href="https://en.wikipedia.org/wiki/Datagram_Congestion_Control_Protocol">DCCP</a> But as of this writing it is available only under Linux and BSD. DCCP offers essentially all of the same features written above, sans the reliability mechanism, which makes it a perfect out of the box solution for any real-time application.</p>                </article>
-            </aside><!-- /#featured -->
-                <section id="content" class="body">
-                    <h1>Other articles</h1>
-                    <hr />
-                    <ol id="posts-list" class="hfeed">
+<p>Some readers may be wondering if there are any other alternatives as well, and the answer is yes! There is <a href="https://en.wikipedia.org/wiki/Datagram_Congestion_Control_Protocol">DCCP</a> But as of this writing it is available only under Linux and BSD. DCCP offers essentially all of the same features written above, sans the reliability mechanism, which makes it a perfect out of the box solution for any real-time application.</p>
+    </div><!-- /.entry-content -->
 
-            <li><article class="hentry">
-                <header>
-                    <h1><a href="/triangle-soup-or-how-do-i-eat-it.html" rel="bookmark"
-                           title="Permalink to Triangle Soup, or, how do I eat it?">Triangle Soup, or, how do I eat it?</a></h1>
-                </header>
-
-                <div class="entry-content">
-<footer class="post-info">
-        <abbr class="published" title="2020-06-03T00:00:00+02:00">
-                Published: Wed 03 June 2020
-        </abbr>
-
-        <address class="vcard author">
-                By                         <a class="url fn" href="/author/sifting.html">Sifting</a>
-        </address>
-<p>In <a href="/category/articles.html">Articles</a>.</p>
-
-</footer><!-- /.post-info -->                <p>I have a fascination with old 3D stuff. Games, applications, you name it, it's all exciting! I had a thing for level editors in particular. I remember looking over the <a href="https://github.com/id-Software/Quake-Tools">source code</a> for the old qtools release and marveling - while taking notes - on how they made it  all work, when …</p>
-                <a class="readmore" href="/triangle-soup-or-how-do-i-eat-it.html">read more</a>
-                </div><!-- /.entry-content -->
-            </article></li>
-
-            <li><article class="hentry">
-                <header>
-                    <h1><a href="/leet-and-orange.html" rel="bookmark"
-                           title="Permalink to Leet and Orange">Leet and Orange</a></h1>
-                </header>
-
-                <div class="entry-content">
-<footer class="post-info">
-        <abbr class="published" title="2000-12-01T00:00:00+01:00">
-                Published: Fri 01 December 2000
-        </abbr>
-
-        <address class="vcard author">
-                By                         <a class="url fn" href="/author/sifting.html">Sifting</a>
-        </address>
-<p>In <a href="/category/projects.html">Projects</a>.</p>
-
-</footer><!-- /.post-info -->                <p>I really like Anarchy Online. There's a bit of an archival subculture in the 
-community - it's an old game now, with <em>a lot</em> of history behind it - complete
-with a <a href="https://gitlab.com/AOvault/AOvault">community archive</a> that keeps track of everything from CD images to 
-screenshots. As I browsed through the files, it had …</p>
-                <a class="readmore" href="/leet-and-orange.html">read more</a>
-                </div><!-- /.entry-content -->
-            </article></li>
-
-            <li><article class="hentry">
-                <header>
-                    <h1><a href="/transhuman.html" rel="bookmark"
-                           title="Permalink to Transhuman">Transhuman</a></h1>
-                </header>
-
-                <div class="entry-content">
-<footer class="post-info">
-        <abbr class="published" title="2000-11-01T00:00:00+01:00">
-                Published: Wed 01 November 2000
-        </abbr>
-
-        <address class="vcard author">
-                By                         <a class="url fn" href="/author/sifting.html">Sifting</a>
-        </address>
-<p>In <a href="/category/projects.html">Projects</a>.</p>
-
-</footer><!-- /.post-info -->                <p>I love a good <a href="https://en.wikipedia.org/wiki/MUD">MUD</a>, in particular <a href="https://www.play.net/dr/">Dragon Realms</a>. 
-The depth and potential for immersive  experiences in these games cannot be overstated.
-So it was, more or less on a whim, that I ended up playing around with the idea of 
-writing my own. While there is a glut of …</p>
-                <a class="readmore" href="/transhuman.html">read more</a>
-                </div><!-- /.entry-content -->
-            </article></li>
-
-            <li><article class="hentry">
-                <header>
-                    <h1><a href="/traum.html" rel="bookmark"
-                           title="Permalink to Traum">Traum</a></h1>
-                </header>
-
-                <div class="entry-content">
-<footer class="post-info">
-        <abbr class="published" title="2000-07-01T00:00:00+02:00">
-                Published: Sat 01 July 2000
-        </abbr>
-
-        <address class="vcard author">
-                By                         <a class="url fn" href="/author/sifting.html">Sifting</a>
-        </address>
-<p>In <a href="/category/projects.html">Projects</a>.</p>
-
-</footer><!-- /.post-info -->                <p>Back in late 2019 I was talking with a friend and we got the idea to put 
-together a little demo for the <a href="https://en.wikipedia.org/wiki/Dreamcast">Sega Dreamcast</a>. A month later, Traum came into
-the world. See for yourself below!</p>
-<p><a href="/data/timelapse.mp4">Time lapse</a></p>
-<p><a href="/data/explore.mp4">Exploration</a></p>
-<p><a href="/data/sunrise.mp4">Sunrise</a></p>
-<p>I wrote Traum from the ground up to be …</p>
-                <a class="readmore" href="/traum.html">read more</a>
-                </div><!-- /.entry-content -->
-            </article></li>
-
-            <li><article class="hentry">
-                <header>
-                    <h1><a href="/double-action.html" rel="bookmark"
-                           title="Permalink to Double Action">Double Action</a></h1>
-                </header>
-
-                <div class="entry-content">
-<footer class="post-info">
-        <abbr class="published" title="2000-03-01T00:00:00+01:00">
-                Published: Wed 01 March 2000
-        </abbr>
-
-        <address class="vcard author">
-                By                         <a class="url fn" href="/author/sifting.html">Sifting</a>
-        </address>
-<p>In <a href="/category/projects.html">Projects</a>.</p>
-
-</footer><!-- /.post-info -->                <p>Around 2013 a friend shared an article to our group. It about this new Source
-game called Double Action, and billed it as the successor to The Specialists,
-an amazing Half-Life modification. I was instantly sold, and before I knew it
-I was writing player physics and game logic!</p>
-<p>The …</p>
-                <a class="readmore" href="/double-action.html">read more</a>
-                </div><!-- /.entry-content -->
-            </article></li>
-
-            <li><article class="hentry">
-                <header>
-                    <h1><a href="/star-cannon-invasion-formation.html" rel="bookmark"
-                           title="Permalink to Star Cannon: Invasion Formation">Star Cannon: Invasion Formation</a></h1>
-                </header>
-
-                <div class="entry-content">
-<footer class="post-info">
-        <abbr class="published" title="2000-01-01T00:00:00+01:00">
-                Published: Sat 01 January 2000
-        </abbr>
-
-        <address class="vcard author">
-                By                         <a class="url fn" href="/author/sifting.html">Sifting</a>
-        </address>
-<p>In <a href="/category/projects.html">Projects</a>.</p>
-
-</footer><!-- /.post-info -->                <p>In March of 2009 a friend sent a message to me, explaining that they were working
-on a game for a competition, that they needed an audio and file system, and
-that the deadline was in three days. Of course, I agreed to help!
-Less than twenty four hours later …</p>
-                <a class="readmore" href="/star-cannon-invasion-formation.html">read more</a>
-                </div><!-- /.entry-content -->
-            </article></li>
-                </ol><!-- /#posts-list -->
-                </section><!-- /#content -->
+  </article>
+</section>
         <section id="extras" class="body">
                 <div class="social">
                         <h2>social</h2>

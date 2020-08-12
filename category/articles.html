@@ -17,10 +17,10 @@
 
             <aside id="featured" class="body">
                 <article>
-                    <h1 class="entry-title"><a href="/triangle-soup-or-how-do-i-eat-it.html">Triangle Soup, or, how do I eat it?</a></h1>
+                    <h1 class="entry-title"><a href="/hooking-up-online-a-symposium-on-sockets.html">Hooking Up Online: a symposium on sockets</a></h1>
 <footer class="post-info">
-        <abbr class="published" title="3000-06-03T00:00:00+01:00">
-                Published: Tue 03 June 3000
+        <abbr class="published" title="2020-08-12T00:00:00+02:00">
+                Published: Wed 12 August 2020
         </abbr>
 
         <address class="vcard author">
@@ -28,101 +28,56 @@
         </address>
 <p>In <a href="/category/articles.html">Articles</a>.</p>
 
-</footer><!-- /.post-info --><p>I have a fascination with old 3D stuff. Games, applications, you name it, it's all exciting! I had a thing for level editors in particular. I remember looking over the <a href="https://github.com/id-Software/Quake-Tools">source code</a> for the old qtools release and marveling - while taking notes - on how they made it  all work, when I read a comment, presumably from Abrash or Carmack:</p>
-<p><a href="https://github.com/id-Software/Quake-Tools/blob/c0d1b91c74eb654365ac7755bc837e497caaca73/qutils/QBSP/BRUSH.C#L433"><code>This is done by brute force, and could easily get a lot faster if anyone cares.</code></a></p>
-<p>And it had me wondering...</p>
-<p>In the years since, I have picked up a few new tricks for solving those same old problems, of which I am happy to present two of them here, but let's begin  with the problem itself: the triangle soup.  </p>
-<h3>What <em>is</em> Triangle Soup?</h3>
-<p>These days it's not uncommon for entire levels to be made inside 3D packages; with Traum everything from geometry to entities are made and arranged inside Blender. A piece-wise approach is also popular where geometric set-pieces are crafted in the 3D package of choice, then brought into a designer tool, as  is often seen in Unity and Unreal. Which ever way is used though, the data has to be processed into a form that the underlying engine may use. In terms of  geometric data, it is often given as an unorganised set of polygons -  often triangles - hence the name Triangle Soup comes.</p>
-<p>Depending on your application, you may only be interested in the faces, in  which case you will need only minimal processing, whereas things like physics  engines require a lot more work to process the data into something usable. What ever your application may be, the first data structure presented here will help aid in the digestion of the triangle soup!</p>
-<h3>The Half-Edge Structure</h3>
-<p>This data structure is also known as the <a href="https://en.wikipedia.org/wiki/Doubly_connected_edge_list">Doubly Connected Edge List</a>, a name which a part from being a mouthful, also hints at its underlying primitive structure.  In short, a given polygon is decomposed into a doubly linked list, where each edge is a node in the list. Edges are linked in respect to their winding order. While not required, I find making the list circular simplifies a lot of code in practice.</p>
-<p>The 'half' part of the 'Half-Edge' name stems from the fact each edge in this  structure is bound only to a single face, rather than being shared between two as in the general sense of an edge. Instead, each half-edge contains a link to  its <code>twin</code> in the other face that shares the logical edge, which together the  twins represent. For clarity, see the picture below.</p>
-<div class="highlight"><pre><span></span>            <span class="n">AB</span>
-    <span class="n">A</span><span class="o">-----------------</span><span class="n">B</span>
-    <span class="o">|</span>                <span class="o">/|</span>
-    <span class="o">|</span>               <span class="o">/</span> <span class="o">|</span>
-    <span class="o">|</span>     <span class="n">F0</span>       <span class="o">/</span>  <span class="o">|</span>
-    <span class="o">|</span>             <span class="o">/</span>   <span class="o">|</span>
-    <span class="o">|</span>            <span class="o">/</span>    <span class="o">|</span>
-    <span class="o">|</span>           <span class="o">/</span>     <span class="o">|</span>
-    <span class="o">|</span>          <span class="o">/</span>      <span class="o">|</span>
- <span class="n">CA</span> <span class="o">|</span>      <span class="n">BC</span> <span class="o">/</span>       <span class="o">|</span> <span class="n">BD</span>
-    <span class="o">|</span>        <span class="o">/</span>        <span class="o">|</span>
-    <span class="o">|</span>       <span class="o">/</span> <span class="n">CB</span>      <span class="o">|</span>
-    <span class="o">|</span>      <span class="o">/</span>          <span class="o">|</span>
-    <span class="o">|</span>     <span class="o">/</span>           <span class="o">|</span>
-    <span class="o">|</span>    <span class="o">/</span>            <span class="o">|</span>
-    <span class="o">|</span>   <span class="o">/</span>             <span class="o">|</span>
-    <span class="o">|</span>  <span class="o">/</span>       <span class="n">F1</span>     <span class="o">|</span>
-    <span class="o">|</span> <span class="o">/</span>               <span class="o">|</span>
-    <span class="o">|/</span>                <span class="o">|</span>
-    <span class="n">C</span><span class="o">-----------------</span><span class="n">D</span>
-            <span class="n">DC</span>
-</pre></div>
-
-
-<p><sup>Edges AB, BC and CA form face F0, and edges BD, DC and CB form face F1. Edges BC and CB are twins. Note that the <code>twin</code>s may have different winding orders.</sup></p>
-<p>In addition to the edge links, the remaining fields of a half-edge are a vertex and a reference to the face to which it belongs. Additional fields may be given as well as needed. A basic example is given below.</p>
-<div class="highlight"><pre><span></span><span class="n">struct</span> <span class="n">HalfEdge</span><span class="p">:</span>
-    <span class="n">HalfEdge</span> <span class="n">prev</span>
-    <span class="n">HalfEdge</span> <span class="nb">next</span>
-    <span class="n">HalfEdge</span> <span class="n">twin</span>
-    <span class="n">Vector3</span> <span class="n">point</span>
-    <span class="n">Face</span> <span class="n">owner</span>
-<span class="n">end</span>
-</pre></div>
-
-
-<p>Through the <code>twin</code> links may adjacent faces be travelled, thus forming a full fledged graph once the triangle soup has been rendered into this form! This is where the true power of this structure becomes apparent. For example, merging two faces now boils down to a matter of joining linked lists together, like so:</p>
-<div class="highlight"><pre><span></span><span class="n">edge</span><span class="o">.</span><span class="n">prev</span><span class="o">.</span><span class="n">next</span> <span class="o">=</span> <span class="n">twin</span><span class="o">.</span><span class="n">next</span>
-<span class="n">twin</span><span class="o">.</span><span class="n">next</span><span class="o">.</span><span class="n">prev</span> <span class="o">=</span> <span class="n">edge</span><span class="o">.</span><span class="n">prev</span>
-<span class="n">edge</span><span class="o">.</span><span class="n">next</span><span class="o">.</span><span class="n">prev</span> <span class="o">=</span> <span class="n">twin</span><span class="o">.</span><span class="n">prev</span>
-<span class="n">twin</span><span class="o">.</span><span class="n">prev</span><span class="o">.</span><span class="n">next</span> <span class="o">=</span> <span class="n">edge</span><span class="o">.</span><span class="n">next</span>
-</pre></div>
-
-
-<p>In practice there will be some extra busy work with fixing up face references, but as far as the geometric operation itself goes, it's really as simple as  that! </p>
-<p>The appeal in this structure is its generality, and the raw power that it gives us to manipulate geometric data in a sensible, structured way.  In the Traum tools for example, triangle soup is digested into a half-edge  graph, then run through different modules to generate datasets for the graphics  and collision systems, and will be soon used to derive pathfinding data as well.</p>
-<p>All of this generality comes at a cost though, and it's ultimately the same as its underlying structure: High memory overhead, and poor data locality. Each Half-Edge is 44 bytes, assuming 64 bit pointers, making a single triangle consume 132 bytes, given the example structure.</p>
-<p>For situations where this is too great a cost, I would like to present the next structure as a possible alternative.</p>
-<h3>The Tri-Tree</h3>
-<p>The Tri-Tree is, as far as I know, a little known data structure that is analogous in every way to its more famous sibling, the <a href="https://en.wikipedia.org/wiki/Quadtree">Quad-Tree</a>. The difference between them being that the Tri-Tree only has three neighbours instead of four. I first encountered it while reading about Henri Hakl's <a href="https://www.researchgate.net/publication/220102990_Diamond_terrain_algorithm_continuous_levels_of_detail_for_height_fields">Diamond Terrain Algorithm</a>, and have never again seen it in any other literature or application, but it is also a fine digestive aid. See the picture below to get an idea of how it's shaped.</p>
-<div class="highlight"><pre><span></span> <span class="n">________________________</span>
- \          <span class="o">/</span>\          <span class="o">/</span>
-  \  <span class="n">left</span>  <span class="o">/</span> <span class="n">b</span>\ <span class="n">right</span>  <span class="o">/</span>
-   \      <span class="o">/</span><span class="n">____</span>\      <span class="o">/</span>
-    \    <span class="o">/</span>\    <span class="o">/</span>\    <span class="o">/</span>
-     \  <span class="o">/</span><span class="n">d</span> \ <span class="n">a</span><span class="o">/</span> <span class="n">c</span>\  <span class="o">/</span>
-      \<span class="o">/</span><span class="n">____</span>\<span class="o">/</span><span class="n">____</span>\<span class="o">/</span>
-       \  <span class="n">bottom</span>  <span class="o">/</span>
-        \        <span class="o">/</span>
-         \      <span class="o">/</span>
-          \    <span class="o">/</span>
-           \  <span class="o">/</span>
-            \<span class="o">/</span>
-</pre></div>
-
-
-<p><sup>The Tri-Tree has a reference to its parent tri-tree, three references to its  neighbours, one for each edge, as well as four references to inner tri-tree children.</sup></p>
-<p>An example structure may look like this, and again, additional fields for attribute data may be added as needed:</p>
-<div class="highlight"><pre><span></span><span class="n">struct</span> <span class="n">TriTree</span><span class="p">:</span>
-    <span class="n">TriTree</span> <span class="n">parent</span>
-    <span class="n">TriTree</span> <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">bottom</span>     <span class="c1">#The three neighbours</span>
-    <span class="n">TriTree</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span>              <span class="c1">#The four children</span>
-    <span class="n">Vector3</span> <span class="n">p0</span><span class="p">,</span> <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span>              <span class="c1">#The 3 points of the triangle</span>
-<span class="n">end</span>
-</pre></div>
-
-
-<p>This structure has a strong hierarchal flavour with this interesting property: any triangle may be split into four sub-triangles, or vice versa, any four children may be reduced into a single triangle. Because of this, the Tri-Tree  structure lends it self well to deriving graphical data. For example, by  exploiting its hierarchal property, generating LODs is made a much more  enjoyable task. I also found that it makes for a suitable choice for creating  adjacency graphs, which if that's all you need, then the structure could be modified such that there are only the three neighbour links.</p>
-<p>Memory usage may be reduced by storing references as 8- 16- or 32- bit values, that index into a preallocated list of Tri-Tree structures, which is more easily  done with this structure than the Half-Edge given above. Similarly the vertices  may be given as index values as well for further savings. Indeed, of the two  this structure is the most flexible with memory usage. A single triangle  comes in at 100 bytes in the example form, and may easily be reduced to less than a single half-edge in size!</p>
-<p>Outside of graphical applications things look rough for the Tri-Tree. While it has an interesting hierarchal property, and constant time access to adjacency information, it does not provide any explicit access to edge data, in addition to being locked into representing all geometry as triangles. However, if these limitations are acceptable, then it may work well in digesting triangle soup into pathfinding data, given its easy access to adjacency information.</p>
+</footer><!-- /.post-info --><p>One of the coolest things that I remember doing is creating a little chat application and using it to chat with my friends. It made me feel powerful, even though the actual code was simple. Of course, I knew what next had to be done...</p>
+<p>In this article I will share some insight that I've gained in my time writing networking code for <em>Real-Time Applications.</em> So let's start with that age old question.</p>
+<h3>TCP Or UDP?</h3>
+<p>Traditional wisdom says to use UDP for speed, and TCP for reliability, but fails to really explain the reasoning behind it. In a real time application there may be reasons to use both - for example, in a video game you may want to use TCP for text chat, and UDP for communicating game state. Why is that, though?</p>
+<p><a href="https://en.wikipedia.org/wiki/Transmission_Control_Protocol">TCP</a> is arguably the one most people learn first, which makes it a worthy starting point. Its main draw is that it is <em>reliable</em>, that is, data written to a TCP socket is guaranteed to arrive at its destination, and in the order that it was sent. In order to accomplish this, the TCP socket has an internal buffer, which we will call the <em>send queue.</em> When data is written to a socket, it simply goes to the send queue and awaits transmission. The exact time it takes to drain the send queue is subject to vagaries both analogue and digital, but the short of all this is that data arrives without any guarantee in respect to an upper time bound. This makes TCP ill-suited for streaming data in real time.</p>
+<p><a href="https://howdoesinternetwork.com/2015/nagles-algorithm"><em>But Just turn off Nagle's Algorithm!</em></a> This saying is parroted a lot, and it misses the point. The issue of using TCP to stream data in a real-time application is that <strong><em>TCP makes no guarantees about delivery time.</em></strong> This is problematic in a <strong><em>real-time</em></strong> program, where the the data is expected to be current, or near current as possible - not some crusty old news from a few hundred milliseconds ago! So even with Nagle's Algorithm disabled, there is little difference. This is because data is buffered in the send queue until the destination acknowledges its reception.</p>
+<p>Some readers may of course point out TCP works just fine in a real time setting, for example, <a href="https://www.html5rocks.com/en/tutorials/websockets/basics/">Websockets</a> are often used for just this purpose, and they sit entirely on top of TCP. This is true to a degree, but assumes that the send queue may be emptied faster than it is filled. More latency will be introduced each time data is written to the socket before it can clear the send queue, which itself will grow - and it <em>will</em> grow - until it overflows, and the system throws an out of memory error. This is a <a href="https://en.wikipedia.org/wiki/Race_condition">race condition</a>. A tell-tale sign of this for users is common in VOIP programs, where after some hitch or stall, it sounds like several people are talking all at once, or way out of time.</p>
+<p>Another way of understanding the problem is put like this: since TCP is a reliable protocol, it is ill-suited for streaming data in real time; that is, we need an <em>unreliable</em> protocol.</p>
+<h3>Streaming In Real-Time</h3>
+<p>At this point it's worth stating how streaming is supposed to be done in a real-time scenario. The number one priority in a real-time system is immediacy. Everything should be as close to current as possible. This means if data is dropped, then it should be ignored; new data will be sent along soon to take its place. This may result in some of artifact - think of audio dropping out of a call on your phone, or characters warping across screen in an online game. While these artifacts are ugly, they are unavoidable. </p>
+<p>This may all seem a bit esoteric, so for clarity think of a TCP streaming application as a <a href="https://www.computerhope.com/jargon/v/vcr.htm">VCR</a>, and real-time streaming applications as live television. If the power goes out, then the VCR will simply resume from where it was, but with live television it will resume from where things currently are at present. As a viewer you miss out on what happened during the black out, but when the power comes back on you are just as current as anyone else watching. In this analogy data loss is the power outage. It also also worth mentioning that though you may miss out on what happens during the outage of live television, you may well guess what does based off prior context. This would be equivalent to extrapolating objects in an online game. </p>
+<p>This all holds regardless of protocols used, though here I refer to TCP specifically, in general, any reliable, buffered protocol will have these same problems. In order to provide the best experience possible, we have to use an <em>unreliable</em> protocol and take control of the process ourselves.</p>
+<h3>Enter UDP</h3>
+<p><a href="https://en.wikipedia.org/wiki/User_Datagram_Protocol">UDP</a> was designed for one thing: speed. In order to get that speed, all of the nice features from TCP were stripped away to the bare bones. It is a <a href="https://www.geeksforgeeks.org/difference-between-stateless-and-stateful-protocol/"><em>stateless</em></a> protocol and the only guarantee it offers is that sent data will arrive intact, provided it arrives at all. Being stateless, or connectionless, the only two functions we have to worry about for the most part are <code>sento</code> and <code>recvfrom</code>.</p>
+<p>An important point to note here is that each call to <code>sendto</code> on a UDP socket generates a datagram that is sent at once over the network. Datagrams are subject to the <a href="https://en.wikipedia.org/wiki/Maximum_transmission_unit">MTU</a> size, which may be up to 1500 bytes <em>on most networks</em>, though in practice may be lower. The minimum MTU is 576 bytes. If your datagram size exceeds this limit, then the network will reject it flat out. This is further complicated by the fact the internet is composed of many different networks, each may vary in MTU size. It is possible to <a href="https://tools.ietf.org/html/rfc4821">probe for the highest allowed MTU size</a> between two parties by sending packets of dummy data of increasing size until the other party stops receiving them, but in practice <a href="https://github.com/id-Software/Quake-III-Arena/blob/master/code/qcommon/net_chan.c#L50">commercial applications get away with assuming a MTU size.</a></p>
+<p>Another consideration is handling transmission errors. UDP makes no guarantee about when data will arrive at its destination. This means it is possible for data to arrive out of the order it were sent, or to be lost all together. We have a natural interest in being able to control some of this chaos. A simple and effective way to do this is to stamp each packet with a monotonic sequence id. The application should also keep track of the last sequence id it received. When reading a packet off the network, the two values should be compared. If they match then there was no problem in transmission. A mismatch indicates data loss, and the difference between the two values may be used to discover how many packets are missing. The application id is also monotonic, and should always reflect the most recent packet, i.e. never set it to a lower value if a latent packet arrives. This method works great for one way streams, but may be easily extended for duplex streams by encoding an extra sequence id that keeps track of the last packet sent from the remote side. The same rules apply as given above.</p>
+<p>If reliability is desired in some part, then the above method can be further extended once again, in the same fashion. An additional sequence id may be added for reliable data, then the connection simply maintains a send queue for reliable data, and each time a packet is written, some portion of reliable data is copied into it, and the reliable sequence id incremented. The remote side should reply with the last reliable sequence id it has read, then the local send queue is drained up to that point. If the two ids match, then there is no more reliable data to send. Reliable data is sent each packet until it is acknowledged by the remote side. If you find yourself using reliable transfer a lot, then it may be better to simply use TCP instead, or to rethink your approach if you're writing for a real-time application.</p>
+<p>At this point, if you know that your largest possible packet will be less than the MTU size, then no other framing is required to get a usable protocol up and running. On the other hand, if it's conceivable that your packet size will exceed the the MTU, then it's time to consider a fragmentation approach. Fragmentation is the act of splitting a large packet up into a series of smaller ones that fit within the MTU size, then sending them out individually, where they are then reassembled on the remote side. To facilitate this, I find the best to write another monotonic id to the packet, which keeps track of each fragment within a packet. The concept is straight forward enough, but there is room for finessing - for example, how should out of order fragments be handled?</p>
 <h3>The Final Word</h3>
-<p>Some readers may be wondering if there are any other alternatives out there, and the answer is Yes: the <a href="https://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/model/winged-e.html">Winged Edge</a> structure is said to offer a lot of constant time look ups if  you're really hurting for speed, but it's a state heavy solution, requiring three  different structures, and has the highest memory overhead of them all. Its features are similar to the Half-Edge structure, which it predates by a few years!</p>
-<p>And with that we come to the end of the article. I hope these little musings  help someone find their way in this crazy world.</p>
-<p>Thank you for reading! </p>                </article>
+<p>So from here you should have a good idea of why reliable protocols a la TCP are a poor choice for streaming in real time, and more over, how to get started with UDP to do something better, but there are numerous avenues to explore from here, but are beyond the scope of this introduction, e.g.: how to handle data loss in a graceful manner.</p>
+<p>Some readers may be wondering if there are any other alternatives as well, and the answer is yes! There is <a href="https://en.wikipedia.org/wiki/Datagram_Congestion_Control_Protocol">DCCP</a> But as of this writing it is available only under Linux and BSD. DCCP offers essentially all of the same features written above, sans the reliability mechanism, which makes it a perfect out of the box solution for any real-time application.</p>                </article>
             </aside><!-- /#featured -->
+                <section id="content" class="body">
+                    <h1>Other articles</h1>
+                    <hr />
+                    <ol id="posts-list" class="hfeed">
+
+            <li><article class="hentry">
+                <header>
+                    <h1><a href="/triangle-soup-or-how-do-i-eat-it.html" rel="bookmark"
+                           title="Permalink to Triangle Soup, or, how do I eat it?">Triangle Soup, or, how do I eat it?</a></h1>
+                </header>
+
+                <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2020-06-03T00:00:00+02:00">
+                Published: Wed 03 June 2020
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="/author/sifting.html">Sifting</a>
+        </address>
+<p>In <a href="/category/articles.html">Articles</a>.</p>
+
+</footer><!-- /.post-info -->                <p>I have a fascination with old 3D stuff. Games, applications, you name it, it's all exciting! I had a thing for level editors in particular. I remember looking over the <a href="https://github.com/id-Software/Quake-Tools">source code</a> for the old qtools release and marveling - while taking notes - on how they made it  all work, when …</p>
+                <a class="readmore" href="/triangle-soup-or-how-do-i-eat-it.html">read more</a>
+                </div><!-- /.entry-content -->
+            </article></li>
+                </ol><!-- /#posts-list -->
+                </section><!-- /#content -->
         <section id="extras" class="body">
                 <div class="social">
                         <h2>social</h2>

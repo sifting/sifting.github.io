@@ -17,10 +17,76 @@
 
             <aside id="featured" class="body">
                 <article>
-                    <h1 class="entry-title"><a href="/leet-and-orange.html">Leet and Orange</a></h1>
+                    <h1 class="entry-title"><a href="/hooking-up-online-a-symposium-on-sockets.html">Hooking Up Online: a symposium on sockets</a></h1>
 <footer class="post-info">
-        <abbr class="published" title="3000-12-01T00:00:00+01:00">
-                Published: Mon 01 December 3000
+        <abbr class="published" title="2020-08-12T00:00:00+02:00">
+                Published: Wed 12 August 2020
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="/author/sifting.html">Sifting</a>
+        </address>
+<p>In <a href="/category/articles.html">Articles</a>.</p>
+
+</footer><!-- /.post-info --><p>One of the coolest things that I remember doing is creating a little chat application and using it to chat with my friends. It made me feel powerful, even though the actual code was simple. Of course, I knew what next had to be done...</p>
+<p>In this article I will share some insight that I've gained in my time writing networking code for <em>Real-Time Applications.</em> So let's start with that age old question.</p>
+<h3>TCP Or UDP?</h3>
+<p>Traditional wisdom says to use UDP for speed, and TCP for reliability, but fails to really explain the reasoning behind it. In a real time application there may be reasons to use both - for example, in a video game you may want to use TCP for text chat, and UDP for communicating game state. Why is that, though?</p>
+<p><a href="https://en.wikipedia.org/wiki/Transmission_Control_Protocol">TCP</a> is arguably the one most people learn first, which makes it a worthy starting point. Its main draw is that it is <em>reliable</em>, that is, data written to a TCP socket is guaranteed to arrive at its destination, and in the order that it was sent. In order to accomplish this, the TCP socket has an internal buffer, which we will call the <em>send queue.</em> When data is written to a socket, it simply goes to the send queue and awaits transmission. The exact time it takes to drain the send queue is subject to vagaries both analogue and digital, but the short of all this is that data arrives without any guarantee in respect to an upper time bound. This makes TCP ill-suited for streaming data in real time.</p>
+<p><a href="https://howdoesinternetwork.com/2015/nagles-algorithm"><em>But Just turn off Nagle's Algorithm!</em></a> This saying is parroted a lot, and it misses the point. The issue of using TCP to stream data in a real-time application is that <strong><em>TCP makes no guarantees about delivery time.</em></strong> This is problematic in a <strong><em>real-time</em></strong> program, where the the data is expected to be current, or near current as possible - not some crusty old news from a few hundred milliseconds ago! So even with Nagle's Algorithm disabled, there is little difference. This is because data is buffered in the send queue until the destination acknowledges its reception.</p>
+<p>Some readers may of course point out TCP works just fine in a real time setting, for example, <a href="https://www.html5rocks.com/en/tutorials/websockets/basics/">Websockets</a> are often used for just this purpose, and they sit entirely on top of TCP. This is true to a degree, but assumes that the send queue may be emptied faster than it is filled. More latency will be introduced each time data is written to the socket before it can clear the send queue, which itself will grow - and it <em>will</em> grow - until it overflows, and the system throws an out of memory error. This is a <a href="https://en.wikipedia.org/wiki/Race_condition">race condition</a>. A tell-tale sign of this for users is common in VOIP programs, where after some hitch or stall, it sounds like several people are talking all at once, or way out of time.</p>
+<p>Another way of understanding the problem is put like this: since TCP is a reliable protocol, it is ill-suited for streaming data in real time; that is, we need an <em>unreliable</em> protocol.</p>
+<h3>Streaming In Real-Time</h3>
+<p>At this point it's worth stating how streaming is supposed to be done in a real-time scenario. The number one priority in a real-time system is immediacy. Everything should be as close to current as possible. This means if data is dropped, then it should be ignored; new data will be sent along soon to take its place. This may result in some of artifact - think of audio dropping out of a call on your phone, or characters warping across screen in an online game. While these artifacts are ugly, they are unavoidable. </p>
+<p>This may all seem a bit esoteric, so for clarity think of a TCP streaming application as a <a href="https://www.computerhope.com/jargon/v/vcr.htm">VCR</a>, and real-time streaming applications as live television. If the power goes out, then the VCR will simply resume from where it was, but with live television it will resume from where things currently are at present. As a viewer you miss out on what happened during the black out, but when the power comes back on you are just as current as anyone else watching. In this analogy data loss is the power outage. It also also worth mentioning that though you may miss out on what happens during the outage of live television, you may well guess what does based off prior context. This would be equivalent to extrapolating objects in an online game. </p>
+<p>This all holds regardless of protocols used, though here I refer to TCP specifically, in general, any reliable, buffered protocol will have these same problems. In order to provide the best experience possible, we have to use an <em>unreliable</em> protocol and take control of the process ourselves.</p>
+<h3>Enter UDP</h3>
+<p><a href="https://en.wikipedia.org/wiki/User_Datagram_Protocol">UDP</a> was designed for one thing: speed. In order to get that speed, all of the nice features from TCP were stripped away to the bare bones. It is a <a href="https://www.geeksforgeeks.org/difference-between-stateless-and-stateful-protocol/"><em>stateless</em></a> protocol and the only guarantee it offers is that sent data will arrive intact, provided it arrives at all. Being stateless, or connectionless, the only two functions we have to worry about for the most part are <code>sento</code> and <code>recvfrom</code>.</p>
+<p>An important point to note here is that each call to <code>sendto</code> on a UDP socket generates a datagram that is sent at once over the network. Datagrams are subject to the <a href="https://en.wikipedia.org/wiki/Maximum_transmission_unit">MTU</a> size, which may be up to 1500 bytes <em>on most networks</em>, though in practice may be lower. The minimum MTU is 576 bytes. If your datagram size exceeds this limit, then the network will reject it flat out. This is further complicated by the fact the internet is composed of many different networks, each may vary in MTU size. It is possible to <a href="https://tools.ietf.org/html/rfc4821">probe for the highest allowed MTU size</a> between two parties by sending packets of dummy data of increasing size until the other party stops receiving them, but in practice <a href="https://github.com/id-Software/Quake-III-Arena/blob/master/code/qcommon/net_chan.c#L50">commercial applications get away with assuming a MTU size.</a></p>
+<p>Another consideration is handling transmission errors. UDP makes no guarantee about when data will arrive at its destination. This means it is possible for data to arrive out of the order it were sent, or to be lost all together. We have a natural interest in being able to control some of this chaos. A simple and effective way to do this is to stamp each packet with a monotonic sequence id. The application should also keep track of the last sequence id it received. When reading a packet off the network, the two values should be compared. If they match then there was no problem in transmission. A mismatch indicates data loss, and the difference between the two values may be used to discover how many packets are missing. The application id is also monotonic, and should always reflect the most recent packet, i.e. never set it to a lower value if a latent packet arrives. This method works great for one way streams, but may be easily extended for duplex streams by encoding an extra sequence id that keeps track of the last packet sent from the remote side. The same rules apply as given above.</p>
+<p>If reliability is desired in some part, then the above method can be further extended once again, in the same fashion. An additional sequence id may be added for reliable data, then the connection simply maintains a send queue for reliable data, and each time a packet is written, some portion of reliable data is copied into it, and the reliable sequence id incremented. The remote side should reply with the last reliable sequence id it has read, then the local send queue is drained up to that point. If the two ids match, then there is no more reliable data to send. Reliable data is sent each packet until it is acknowledged by the remote side. If you find yourself using reliable transfer a lot, then it may be better to simply use TCP instead, or to rethink your approach if you're writing for a real-time application.</p>
+<p>At this point, if you know that your largest possible packet will be less than the MTU size, then no other framing is required to get a usable protocol up and running. On the other hand, if it's conceivable that your packet size will exceed the the MTU, then it's time to consider a fragmentation approach. Fragmentation is the act of splitting a large packet up into a series of smaller ones that fit within the MTU size, then sending them out individually, where they are then reassembled on the remote side. To facilitate this, I find the best to write another monotonic id to the packet, which keeps track of each fragment within a packet. The concept is straight forward enough, but there is room for finessing - for example, how should out of order fragments be handled?</p>
+<h3>The Final Word</h3>
+<p>So from here you should have a good idea of why reliable protocols a la TCP are a poor choice for streaming in real time, and more over, how to get started with UDP to do something better, but there are numerous avenues to explore from here, but are beyond the scope of this introduction, e.g.: how to handle data loss in a graceful manner.</p>
+<p>Some readers may be wondering if there are any other alternatives as well, and the answer is yes! There is <a href="https://en.wikipedia.org/wiki/Datagram_Congestion_Control_Protocol">DCCP</a> But as of this writing it is available only under Linux and BSD. DCCP offers essentially all of the same features written above, sans the reliability mechanism, which makes it a perfect out of the box solution for any real-time application.</p>                </article>
+            </aside><!-- /#featured -->
+                <section id="content" class="body">
+                    <h1>Other articles</h1>
+                    <hr />
+                    <ol id="posts-list" class="hfeed">
+
+            <li><article class="hentry">
+                <header>
+                    <h1><a href="/triangle-soup-or-how-do-i-eat-it.html" rel="bookmark"
+                           title="Permalink to Triangle Soup, or, how do I eat it?">Triangle Soup, or, how do I eat it?</a></h1>
+                </header>
+
+                <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2020-06-03T00:00:00+02:00">
+                Published: Wed 03 June 2020
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="/author/sifting.html">Sifting</a>
+        </address>
+<p>In <a href="/category/articles.html">Articles</a>.</p>
+
+</footer><!-- /.post-info -->                <p>I have a fascination with old 3D stuff. Games, applications, you name it, it's all exciting! I had a thing for level editors in particular. I remember looking over the <a href="https://github.com/id-Software/Quake-Tools">source code</a> for the old qtools release and marveling - while taking notes - on how they made it  all work, when …</p>
+                <a class="readmore" href="/triangle-soup-or-how-do-i-eat-it.html">read more</a>
+                </div><!-- /.entry-content -->
+            </article></li>
+
+            <li><article class="hentry">
+                <header>
+                    <h1><a href="/leet-and-orange.html" rel="bookmark"
+                           title="Permalink to Leet and Orange">Leet and Orange</a></h1>
+                </header>
+
+                <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2000-12-01T00:00:00+01:00">
+                Published: Fri 01 December 2000
         </abbr>
 
         <address class="vcard author">
@@ -28,42 +94,13 @@
         </address>
 <p>In <a href="/category/projects.html">Projects</a>.</p>
 
-</footer><!-- /.post-info --><p>I really like Anarchy Online. There's a bit of an archival subculture in the 
+</footer><!-- /.post-info -->                <p>I really like Anarchy Online. There's a bit of an archival subculture in the 
 community - it's an old game now, with <em>a lot</em> of history behind it - complete
 with a <a href="https://gitlab.com/AOvault/AOvault">community archive</a> that keeps track of everything from CD images to 
-screenshots. As I browsed through the files, it had me thinking about what 
-would happen when the game went offline - all the unique areas and characters 
-and music and everything would be in effect lost. So I opened my hex editor and fired up 
-<a href="https://www.hex-rays.com/">IDA</a>. I'm happy to say that since then almost all of the 
-assets and their file formats have been reverse engineered and documented, the 
-results of which can be seen below. I decided to call this project Leet, 
-after a fan favourite character in the game.</p>
-<p><a href="/data/leet.mp4">An equiped character, showing off some new armour</a></p>
-<p><a href="/data/leet2.mp4">The new Aztur model for the RK2019 server</a></p>
-<p>After figuring out most of the assets, it occured to me how cool it would be to
-put together an interactive demo. If anything, it would give me a chance
-to put MiST, a library that I wrote in C, containing wealth of neat things, 
-including a thread module that implements something akin to C# style tasks - 
-to good use! You can see the results of that effort here:</p>
-<p><a href="/data/orange.mp4">Running around</a></p>
-<p><a href="/data/orange2.mp4">Showing off some camera controls</a></p>
-<p>It was quite an effort putting it all together. In order to just playback the 
-animations alone I had to write a whole new animation system from the ground up, but
-the results are quite good I feel, given it supports a modern feature set. Indeed, 
-the whole project runs on wholly original technology, from graphics down to 
-the configuration parser. I initially toyed with the idea of reading all of 
-the assets from the game's resource database, but opted against it, reasoning 
-that it would be better to preprocess all of the assets into original new formats, 
-both out of concern for Anarchy Online, and to make implementing the 
-new systems easier. I ended up calling this new effort Orange to set it apart
-from Leet proper.</p>
-<p>It was all in all very worth while, being full of new experiences and interesting
-stories to tell.</p>                </article>
-            </aside><!-- /#featured -->
-                <section id="content" class="body">
-                    <h1>Other articles</h1>
-                    <hr />
-                    <ol id="posts-list" class="hfeed">
+screenshots. As I browsed through the files, it had …</p>
+                <a class="readmore" href="/leet-and-orange.html">read more</a>
+                </div><!-- /.entry-content -->
+            </article></li>
 
             <li><article class="hentry">
                 <header>
@@ -73,8 +110,8 @@ stories to tell.</p>                </article>
 
                 <div class="entry-content">
 <footer class="post-info">
-        <abbr class="published" title="3000-11-01T00:00:00+01:00">
-                Published: Sat 01 November 3000
+        <abbr class="published" title="2000-11-01T00:00:00+01:00">
+                Published: Wed 01 November 2000
         </abbr>
 
         <address class="vcard author">
@@ -98,8 +135,8 @@ writing my own. While there is a glut of …</p>
 
                 <div class="entry-content">
 <footer class="post-info">
-        <abbr class="published" title="3000-07-01T00:00:00+01:00">
-                Published: Tue 01 July 3000
+        <abbr class="published" title="2000-07-01T00:00:00+02:00">
+                Published: Sat 01 July 2000
         </abbr>
 
         <address class="vcard author">
@@ -120,36 +157,14 @@ the world. See for yourself below!</p>
 
             <li><article class="hentry">
                 <header>
-                    <h1><a href="/triangle-soup-or-how-do-i-eat-it.html" rel="bookmark"
-                           title="Permalink to Triangle Soup, or, how do I eat it?">Triangle Soup, or, how do I eat it?</a></h1>
-                </header>
-
-                <div class="entry-content">
-<footer class="post-info">
-        <abbr class="published" title="3000-06-03T00:00:00+01:00">
-                Published: Tue 03 June 3000
-        </abbr>
-
-        <address class="vcard author">
-                By                         <a class="url fn" href="/author/sifting.html">Sifting</a>
-        </address>
-<p>In <a href="/category/articles.html">Articles</a>.</p>
-
-</footer><!-- /.post-info -->                <p>I have a fascination with old 3D stuff. Games, applications, you name it, it's all exciting! I had a thing for level editors in particular. I remember looking over the <a href="https://github.com/id-Software/Quake-Tools">source code</a> for the old qtools release and marveling - while taking notes - on how they made it  all work, when …</p>
-                <a class="readmore" href="/triangle-soup-or-how-do-i-eat-it.html">read more</a>
-                </div><!-- /.entry-content -->
-            </article></li>
-
-            <li><article class="hentry">
-                <header>
                     <h1><a href="/double-action.html" rel="bookmark"
                            title="Permalink to Double Action">Double Action</a></h1>
                 </header>
 
                 <div class="entry-content">
 <footer class="post-info">
-        <abbr class="published" title="3000-03-01T00:00:00+01:00">
-                Published: Sat 01 March 3000
+        <abbr class="published" title="2000-03-01T00:00:00+01:00">
+                Published: Wed 01 March 2000
         </abbr>
 
         <address class="vcard author">
@@ -174,8 +189,8 @@ I was writing player physics and game logic!</p>
 
                 <div class="entry-content">
 <footer class="post-info">
-        <abbr class="published" title="3000-01-01T00:00:00+01:00">
-                Published: Wed 01 January 3000
+        <abbr class="published" title="2000-01-01T00:00:00+01:00">
+                Published: Sat 01 January 2000
         </abbr>
 
         <address class="vcard author">
